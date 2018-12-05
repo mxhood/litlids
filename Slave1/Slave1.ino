@@ -1,6 +1,7 @@
 //WORKER ADDRESS
 //98d3:41:fd33ba
-
+#include <SoftwareSerial.h>
+SoftwareSerial BTserial(10, 11);
 #define ledPin 9
 
 int forcePin = A0;
@@ -11,12 +12,12 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, HIGH);
   Serial.begin(38400); // Default communication rate of the Bluetooth module
-
+  BTserial.begin(38400);
 }
 void loop() {
- if(Serial.available() > 0){ // Checks whether data is comming from the serial port
-    state = Serial.read(); // Reads the data from the serial port
-    Serial.print("state " + state );
+ if(BTserial.available() > 0){ // Checks whether data is comming from the serial port
+    state = BTserial.parseInt(); // Reads the data from the serial port
+    Serial.print("**************");
  }
  
 // Controlling the LED
@@ -27,9 +28,10 @@ void loop() {
  // Reading the pressure
  val = analogRead(forcePin);
  if (val > 50) {
-    Serial.write('1'); // Sends '1' to the master to turn on LED
+    BTserial.write('1'); // Sends '1' to the master to turn on LED
+    Serial.write('1');
  }
  else {
-    Serial.write('0'); 
+    BTserial.write('0'); 
  }
 }

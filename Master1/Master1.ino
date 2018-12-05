@@ -1,5 +1,8 @@
-#define ledPin 13
-#define button 8
+#include <SoftwareSerial.h>
+SoftwareSerial BTserial(10, 11);
+
+#define ledPin 8
+#define button 2
 
 int state = '0';
 int buttonState = 0;
@@ -8,25 +11,29 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, HIGH);
   Serial.begin(38400); // Default communication rate of the Bluetooth module
+  BTserial.begin(38400);
 }
 
 void loop() {
- if(Serial.available() > 0){ // Checks whether data is comming from the serial port
-  state = Serial.read(); // Reads the data from the serial port
- }
- // Controlling the LED
- if (state == '1') {
-  digitalWrite(ledPin, HIGH); // LED ON
- }
- else {
-  digitalWrite(ledPin, LOW); // LED ON
- }
+// if(BTserial.available() > 0){ // Checks whether data is comming from the serial port
+//  state = BTserial.parseInt(); // Reads the data from the serial port
+//  Serial.print("**************");
+// }
+// // Controlling the LED
+// if (state == '1') {
+//  digitalWrite(ledPin, LOW); // LED ON
+// }
+// else {
+  //digitalWrite(ledPin, HIGH); // LED ON
+// }
 
 buttonState = digitalRead(button);
 if (buttonState == HIGH) {
-  Serial.write('1'); // signal turns everything off. 
+  BTserial.write('1'); // signal turns everything off. 
 }
-
+ if (Serial.available()) {
+    BTserial.write(Serial.read());
+  }
 
  // Reading the button
 // buttonState = digitalRead(button);
