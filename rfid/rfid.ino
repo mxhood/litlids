@@ -1,14 +1,14 @@
 #include <SoftwareSerial.h>
-#include <Servo.h>
+#define ledPin 9
+#define ledPinG 10
+#define ledPinO 11
 
 // Choose two pins for SoftwareSerial
 SoftwareSerial rSerial(2, 3); // RX, TX
 
-// Make a servo object
-Servo lockServo;
+// light output
 
-// Pick a PWM pin to put the servo on
-const int servoPin = 9;
+// touch sensor input
 
 // For SparkFun's tags, we will receive 16 bytes on every
 // tag read, but throw four away. The 13th space will always
@@ -32,19 +32,28 @@ char knownTags[kTags][idLen] = {
 // Empty array to hold a freshly scanned tag
 char newTag[idLen];
 
+// Forcepin info
+int forcePin = A0;
+int val = 0;
+
+// Scan timer
+long scanTime = 0;
+
+// lid status (on = 1, off = 2)
+boolean lidOn = false;
+
 void setup() {
   // Starts the hardware and software serial ports
    Serial.begin(9600);
    rSerial.begin(9600);
 
-   // Attaches the servo to the pin
-   lockServo.attach(servoPin);
-
-   // Put servo in locked position
-   // Note: Value may need to be adjusted 
-   // depending on servo motor
-   lockServo.write(0);
-
+  // set pin and sensor
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
+  pinMode(ledPinG, OUTPUT);
+  digitalWrite(ledPinG, LOW);
+  pinMode(ledPinO, OUTPUT);
+  digitalWrite(ledPinO), LOW);
 }
 
 void loop() {
@@ -100,15 +109,23 @@ void loop() {
     // we checked against, total will be 1
     if (total > 0) {
 
-      // Put the action of your choice here!
-
-      // I'm going to rotate the servo to symbolize unlocking the lockbox
-
-      Serial.println("Success!");
-      lockServo.write(180);
+      // OWNER
+      // set timer, flash green
+      scanTime = millis();
+      digitalWrite(ledPinG, HIGH);
+      delay(300);
+      digitalWrite(ledPinG, LOW);
     }
 
     else {
+        // FALSE
+        // flash orange pin
+        // set timer to 0
+        scanTime = 0;
+        digitalWrite(ledPinO, HIGH);
+        delay(300);
+        digitalWrite(ledPinO, LOW);
+      
         // This prints out unknown cards so you can add them to your knownTags as needed
         Serial.print("Unknown tag! ");
         Serial.print(newTag);
@@ -121,6 +138,36 @@ void loop() {
   for (int c=0; c < idLen; c++) {
     newTag[c] = 0;
   }
+
+  // Reading the pressure
+ val = analogRead(forcePin);
+ if (val > 50) {
+    // lid is put on
+    if (!lidOn) {
+      lidOn = true;
+    } 
+    buffer(50);
+ }
+ // lid is off
+ else {
+    // lid was taken off
+    if (lidOn) {
+      unsigned long currentMillis = millis();
+      long diff = currentMillis - scanTime;
+      // After scan
+      // turn off alarm
+      if (diff <= 500) {
+        digitalWrite(ledPin, LOW);
+      } 
+      // Not after scan
+      // Turn on alarms, send bluetooth
+      else {
+        digitalWrite(ledPin, HIGH);
+      }
+      lidOn = false;
+    } 
+    buffer(50);
+ }
 }
 
 // This function steps through both newTag and one of the known
