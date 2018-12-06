@@ -19,11 +19,15 @@ void loop() {
  if(BTserial.available() > 0){ // Checks whether data is comming from the serial port
     state = BTserial.parseInt(); // Reads the data from the serial port
     Serial.print("**************");
+    buffer(50);
  }
  
 // Controlling the LED
  if (state == '1') {
   digitalWrite(ledPin, LOW); // LED OFF
+ } else {
+  digitalWrite(ledPin, LOW); // LED OFF
+  Serial.write(state);
  }
  
  // Reading the pressure

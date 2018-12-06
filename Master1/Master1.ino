@@ -30,9 +30,11 @@ void loop() {
 buttonState = digitalRead(button);
 if (buttonState == HIGH) {
   BTserial.write('1'); // signal turns everything off. 
+  buffer(50);
 }
  if (Serial.available()) {
     BTserial.write(Serial.read());
+    buffer(50);
   }
 
  // Reading the button
