@@ -4,7 +4,7 @@ SoftwareSerial BTserial(10, 11);
 #define ledPin 8
 #define button 2
 
-int state = '0';
+char state = '0';
 int buttonState = 0;
 
 void setup() {

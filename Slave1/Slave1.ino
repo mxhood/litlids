@@ -6,7 +6,7 @@ SoftwareSerial BTserial(10, 11);
 
 int forcePin = A0;
 int val = 0;
-int state = '0';
+char state = '0';
 
 void setup() {
   pinMode(ledPin, OUTPUT);
@@ -14,6 +14,7 @@ void setup() {
   Serial.begin(38400); // Default communication rate of the Bluetooth module
   BTserial.begin(38400);
 }
+
 void loop() {
  if(BTserial.available() > 0){ // Checks whether data is comming from the serial port
     state = BTserial.parseInt(); // Reads the data from the serial port
