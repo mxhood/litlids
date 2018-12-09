@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
-#define ledPin 9
-#define ledPinG 10
-#define ledPinO 11
+#define ledPinG 10 // green
+#define ledPinO 9 // red
+#define alarm 11
 
 // Choose two pins for SoftwareSerial
 SoftwareSerial rSerial(2, 3); // RX, TX
@@ -19,14 +19,11 @@ SoftwareSerial rSerial(2, 3); // RX, TX
 // plus the total number of tags we want to check against (kTags)
 const int tagLen = 16;
 const int idLen = 13;
-const int kTags = 4;
+const int kTags = 1;
 
 // Put your known tags here!
 char knownTags[kTags][idLen] = {
-             "111111111111",
-             "444444444444",
-             "555555555555",
-             "7A005B0FF8D6"
+             "01068DEC2741"
 };
 
 // Empty array to hold a freshly scanned tag
@@ -34,12 +31,12 @@ char newTag[idLen];
 
 // Forcepin info
 int forcePin = A0;
-int val = 0;
+long val = 0;
 
 // Scan timer
 long scanTime = 0;
 
-// lid status (on = 1, off = 2)
+// lid status 
 boolean lidOn = false;
 
 void setup() {
@@ -48,15 +45,51 @@ void setup() {
    rSerial.begin(9600);
 
   // set pin and sensor
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
+  pinMode(alarm, OUTPUT);
+  digitalWrite(alarm, HIGH);
   pinMode(ledPinG, OUTPUT);
   digitalWrite(ledPinG, LOW);
   pinMode(ledPinO, OUTPUT);
-  digitalWrite(ledPinO), LOW);
+  digitalWrite(ledPinO, LOW);
 }
 
 void loop() {
+  
+    // Reading the pressure
+   val = analogRead(forcePin);
+   
+   if (val > 10) {
+      // lid is put on
+      if (!lidOn) {
+        Serial.println("lid put on");
+        lidOn = true;
+      } 
+      delay(250);
+   }
+   // lid is off
+   else {
+      // lid was taken off
+      if (lidOn) {
+        Serial.println("lid off");
+        unsigned long currentMillis = millis();
+        long diff = currentMillis - scanTime;
+        // After scan
+        // turn off alarm
+        if (diff <= 5000) {
+          Serial.println("alarm off");
+          digitalWrite(alarm, LOW);
+        } 
+        // Not after scan
+        // Turn on alarms, send bluetooth
+        else {
+          Serial.println("alarm on");
+          digitalWrite(alarm, HIGH);
+        }
+        lidOn = false;
+      } 
+      delay(250);
+   }
+  
   // Counter for the newTag array
   int i = 0;
   // Variable to hold each byte read from the serial buffer
@@ -96,6 +129,7 @@ void loop() {
   // don't do anything if the newTag array is full of zeroes
   if (strlen(newTag)== 0) {
     return;
+    Serial.println("newTag is full of zeros");
   }
 
   else {
@@ -109,9 +143,11 @@ void loop() {
     // we checked against, total will be 1
     if (total > 0) {
 
+      Serial.write("owner");
       // OWNER
       // set timer, flash green
       scanTime = millis();
+      digitalWrite(alarm, LOW);
       digitalWrite(ledPinG, HIGH);
       delay(300);
       digitalWrite(ledPinG, LOW);
@@ -127,9 +163,8 @@ void loop() {
         digitalWrite(ledPinO, LOW);
       
         // This prints out unknown cards so you can add them to your knownTags as needed
-        Serial.print("Unknown tag! ");
-        Serial.print(newTag);
-        Serial.println();
+        Serial.println("Unknown tag!");
+        Serial.println(newTag);
     }
   }
 
@@ -138,36 +173,6 @@ void loop() {
   for (int c=0; c < idLen; c++) {
     newTag[c] = 0;
   }
-
-  // Reading the pressure
- val = analogRead(forcePin);
- if (val > 50) {
-    // lid is put on
-    if (!lidOn) {
-      lidOn = true;
-    } 
-    buffer(50);
- }
- // lid is off
- else {
-    // lid was taken off
-    if (lidOn) {
-      unsigned long currentMillis = millis();
-      long diff = currentMillis - scanTime;
-      // After scan
-      // turn off alarm
-      if (diff <= 500) {
-        digitalWrite(ledPin, LOW);
-      } 
-      // Not after scan
-      // Turn on alarms, send bluetooth
-      else {
-        digitalWrite(ledPin, HIGH);
-      }
-      lidOn = false;
-    } 
-    buffer(50);
- }
 }
 
 // This function steps through both newTag and one of the known
